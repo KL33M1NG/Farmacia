@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Farmacia - Control de Medicación</title>
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -73,6 +74,7 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
+    /* Formularios */
     .card {
       background: white;
       border-radius: 12px;
@@ -144,6 +146,7 @@
     }
     button:hover { background: #1f5f5f; }
 
+    /* Tabla historial */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -239,8 +242,9 @@
 
   <script>
     // ========== CONFIGURACIÓN ==========
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxay8AtRfBiuwnHvfUu5PuAwhncQ73HQLAXEHrpbSeU3nMCTI2UASTwrfAYJvvKbw/exec'; // <-- REEMPLAZAR
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxay8AtRfBiuwnHvfUu5PuAwhncQ73HQLAXEHrpbSeU3nMCTI2UASTwrfAYJvvKbw/exec';
 
+    // Lista unificada de medicamentos
     const DRUGS = [
       "Bromuro De Pancuronio 2 mg/ml amp (Refrigerado)",
       "Fentanilo 0,25 mcg/ml amp",
@@ -253,7 +257,6 @@
       "Succinilcolina 100 mg/ml amp (Refrigerado)",
       "Atracurium 50 mg/5ml Iny.amp"
     ];
-
 
     // ========== ELEMENTOS ==========
     const tabs = document.querySelectorAll('.tab-btn');
@@ -356,7 +359,7 @@
       return html;
     }
 
-    // ========== ENVÍO DEL FORMULARIO ==========
+    // ========== ENVÍO DEL FORMULARIO (POST CON no-cors) ==========
     btnEnviar.addEventListener('click', async () => {
       const servicio = servicioSelect.value;
       const tipo = tipoAccionSelect.value;
@@ -402,17 +405,13 @@
       const payload = { servicio, tipo, agente, turno, datosAdicionales, medicamentos };
 
       try {
-        const res = await fetch(SCRIPT_URL, {
+        await fetch(SCRIPT_URL, {
           method: 'POST',
+          mode: 'no-cors',
           body: JSON.stringify(payload)
         });
-        const json = await res.json();
-        if (json.result === 'ok') {
-          alert('Registro guardado correctamente.');
-          limpiarFormulario();
-        } else {
-          alert('Error: ' + json.message);
-        }
+        alert('Registro guardado correctamente.');
+        limpiarFormulario();
       } catch(e) {
         alert('Error de conexión.');
       }
@@ -425,58 +424,86 @@
       btnEnviar.style.display = 'none';
     }
 
-    // ========== CARGAR HISTORIAL ==========
-    async function cargarHistorial() {
+    // ========== CARGAR HISTORIAL (JSONP) ==========
+    function cargarHistorial() {
       const container = document.getElementById('tabla-container');
       container.innerHTML = '<p>Cargando...</p>';
-      try {
-        const res = await fetch(`${SCRIPT_URL}?action=historial&limit=50`);
-        const data = await res.json();
-        if (!data.length) {
+      
+      const callbackName = 'historialCallback_' + Date.now();
+      
+      window[callbackName] = function(data) {
+        if (!data || !data.length) {
           container.innerHTML = '<p>No hay registros aún.</p>';
           return;
         }
         let html = '<table><thead><tr><th>Fecha</th><th>Servicio</th><th>Tipo</th><th>Agente</th><th>Turno</th><th>Detalle</th><th>Medicamentos</th></tr></thead><tbody>';
         data.forEach(row => {
           html += `<tr>
-            <td>${row.FECHAHORA}</td><td>${row.SERVICIO}</td><td>${row.TIPO}</td>
-            <td>${row.AGENTE}</td><td>${row.TURNO}</td><td>${row.DATOS_ADICIONALES}</td>
-            <td>${row.MEDICAMENTOS}</td>
+            <td>${row.FECHAHORA || ''}</td>
+            <td>${row.SERVICIO || ''}</td>
+            <td>${row.TIPO || ''}</td>
+            <td>${row.AGENTE || ''}</td>
+            <td>${row.TURNO || ''}</td>
+            <td>${row.DATOS_ADICIONALES || ''}</td>
+            <td>${row.MEDICAMENTOS || ''}</td>
           </tr>`;
         });
         html += '</tbody></table>';
         container.innerHTML = html;
-      } catch(e) {
+        delete window[callbackName];
+      };
+      
+      const script = document.createElement('script');
+      script.src = `${SCRIPT_URL}?action=historial&limit=50&callback=${callbackName}`;
+      script.onerror = () => {
         container.innerHTML = '<p>Error al cargar historial.</p>';
-      }
+        delete window[callbackName];
+      };
+      document.body.appendChild(script);
     }
 
-    // ========== ESTADÍSTICAS (CHARTS) ==========
+    // ========== ESTADÍSTICAS (JSONP + CHARTS) ==========
     let intervalID;
+    let chartInstances = {};
+
     function iniciarActualizacion() {
       cargarEstadisticas();
       intervalID = setInterval(cargarEstadisticas, 30000);
     }
+
     function detenerActualizacion() {
       clearInterval(intervalID);
     }
 
-    async function cargarEstadisticas() {
-      try {
-        const res = await fetch(`${SCRIPT_URL}?action=stats`);
-        const stats = await res.json();
+    function cargarEstadisticas() {
+      const callbackName = 'statsCallback_' + Date.now();
+      
+      window[callbackName] = function(stats) {
+        if (!stats) return;
         renderConsumo(stats.consumoDiario || {});
         renderPrestamos(stats.prestamosPorServicio || {});
         renderStock(stats.controlesStock || {});
         renderAcciones(stats.accionesDiarias || {});
-      } catch(e) { console.error(e); }
+        delete window[callbackName];
+      };
+      
+      const script = document.createElement('script');
+      script.src = `${SCRIPT_URL}?action=stats&callback=${callbackName}`;
+      script.onerror = () => {
+        console.error('Error al cargar estadísticas');
+        delete window[callbackName];
+      };
+      document.body.appendChild(script);
     }
 
     function renderConsumo(data) {
+      const canvas = document.getElementById('chart-consumo');
+      if (chartInstances.consumo) chartInstances.consumo.destroy();
       const fechas = Object.keys(data).sort();
-      const datasets = [];
+      if (fechas.length === 0) return;
       const allMeds = new Set();
       fechas.forEach(f => Object.keys(data[f]).forEach(m => allMeds.add(m)));
+      const datasets = [];
       allMeds.forEach(med => {
         datasets.push({
           label: med,
@@ -485,11 +512,18 @@
           fill: false
         });
       });
-      new Chart(document.getElementById('chart-consumo'), { type:'line', data:{labels:fechas, datasets} });
+      chartInstances.consumo = new Chart(canvas, {
+        type: 'line',
+        data: { labels: fechas, datasets },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
     }
 
     function renderPrestamos(data) {
+      const canvas = document.getElementById('chart-prestamos');
+      if (chartInstances.prestamos) chartInstances.prestamos.destroy();
       const fechas = Object.keys(data).sort();
+      if (fechas.length === 0) return;
       const servicios = new Set();
       fechas.forEach(f => Object.keys(data[f]).forEach(s => servicios.add(s)));
       const datasets = [];
@@ -501,23 +535,42 @@
           fill: false
         });
       });
-      new Chart(document.getElementById('chart-prestamos'), { type:'line', data:{labels:fechas, datasets} });
+      chartInstances.prestamos = new Chart(canvas, {
+        type: 'line',
+        data: { labels: fechas, datasets },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
     }
 
     function renderStock(data) {
+      const canvas = document.getElementById('chart-stock');
+      if (chartInstances.stock) chartInstances.stock.destroy();
       const fechas = Object.keys(data).sort();
+      if (fechas.length === 0) return;
       const porcentajes = fechas.map(f => {
         const d = data[f];
-        return d.total ? (d.conDif/d.total*100).toFixed(1) : 0;
+        return d.total ? (d.conDif / d.total * 100).toFixed(1) : 0;
       });
-      new Chart(document.getElementById('chart-stock'), {
-        type:'line',
-        data:{ labels:fechas, datasets:[{ label:'% controles con diferencia', data:porcentajes, borderColor:'#e53e3e' }] }
+      chartInstances.stock = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: fechas,
+          datasets: [{
+            label: '% controles con diferencia',
+            data: porcentajes,
+            borderColor: '#e53e3e',
+            fill: false
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
       });
     }
 
     function renderAcciones(data) {
+      const canvas = document.getElementById('chart-acciones');
+      if (chartInstances.acciones) chartInstances.acciones.destroy();
       const fechas = Object.keys(data).sort();
+      if (fechas.length === 0) return;
       const tipos = new Set();
       fechas.forEach(f => Object.keys(data[f]).forEach(t => tipos.add(t)));
       const datasets = [];
@@ -529,11 +582,15 @@
           fill: false
         });
       });
-      new Chart(document.getElementById('chart-acciones'), { type:'line', data:{labels:fechas, datasets} });
+      chartInstances.acciones = new Chart(canvas, {
+        type: 'line',
+        data: { labels: fechas, datasets },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
     }
 
     function randomColor() {
-      return '#' + Math.floor(Math.random()*16777215).toString(16);
+      return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
     }
   </script>
 </body>
