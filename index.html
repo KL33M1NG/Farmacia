@@ -6,237 +6,866 @@
   <title>Farmacia - Control de Medicación</title>
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Font Awesome para iconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #f0f4f8;
-      color: #1a2b3c;
-      min-height:100vh;
-      display:flex; flex-direction:column;
+    :root {
+      --primary: #0d9488;
+      --primary-dark: #0f766e;
+      --primary-light: #ccfbf1;
+      --secondary: #1e40af;
+      --accent: #f59e0b;
+      --danger: #ef4444;
+      --success: #10b981;
+      --bg: #f0f9ff;
+      --bg-card: #ffffff;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 25%, #f0fdf4 50%, #ecfdf5 75%, #f8fafc 100%);
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Fondo decorativo */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 70% 30%, rgba(13, 148, 136, 0.03) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -50%;
+      left: -50%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 30% 70%, rgba(30, 64, 175, 0.03) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header */
     header {
-      background: #ffffff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 0.75rem 1rem;
+      background: var(--bg-card);
+      box-shadow: var(--shadow-lg);
+      padding: 0.75rem 1.5rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      border-bottom: 4px solid #2c7a7b;
+      border-bottom: 3px solid var(--primary);
+      position: relative;
+      z-index: 10;
     }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
     .logos {
       display: flex;
-      gap: 1.5rem;
+      gap: 1.25rem;
       align-items: center;
+      padding: 0.25rem 0.5rem;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
     }
-    .logos img { height: 48px; object-fit: contain; }
+
+    .logos img {
+      height: 44px;
+      object-fit: contain;
+      transition: var(--transition);
+    }
+
+    .logos img:hover {
+      transform: scale(1.05);
+    }
+
+    .logo-divider {
+      width: 1px;
+      height: 36px;
+      background: var(--border);
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .header-title i {
+      font-size: 1.6rem;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 0.5rem;
+      border-radius: 50%;
+    }
+
     h1 {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: #2c7a7b;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      letter-spacing: -0.02em;
     }
+
+    .header-badge {
+      background: var(--success);
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .header-badge .pulse {
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Disclaimer */
     .disclaimer {
-      background: #fff3cd;
-      color: #856404;
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      color: #92400e;
       padding: 0.5rem 1rem;
       text-align: center;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid #fcd34d;
+      position: relative;
+      z-index: 9;
     }
+
+    .disclaimer i {
+      color: var(--accent);
+    }
+
+    /* Navegación */
     nav.tabs {
       display: flex;
-      background: #ffffff;
-      border-bottom: 1px solid #cbd5e0;
-      padding: 0 1rem;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      gap: 0.25rem;
+      position: relative;
+      z-index: 8;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
+
     .tab-btn {
       background: none;
       border: none;
-      padding: 0.8rem 1.5rem;
-      font-size: 1rem;
-      font-weight: 500;
-      color: #4a5568;
+      padding: 1rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-light);
       cursor: pointer;
       border-bottom: 3px solid transparent;
-      transition: all 0.2s;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      position: relative;
+      top: 1px;
     }
+
+    .tab-btn i {
+      font-size: 1.1rem;
+      transition: var(--transition);
+    }
+
+    .tab-btn:hover {
+      color: var(--primary);
+      background: var(--primary-light);
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    }
+
     .tab-btn.active {
-      color: #2c7a7b;
-      border-bottom-color: #2c7a7b;
+      color: var(--primary);
+      border-bottom-color: var(--primary);
     }
+
+    .tab-btn.active i {
+      color: var(--primary);
+    }
+
+    /* Main */
     main {
-      flex:1;
-      padding: 1rem;
-      max-width: 1200px;
+      flex: 1;
+      padding: 1.5rem;
+      max-width: 1300px;
       margin: 0 auto;
       width: 100%;
+      position: relative;
+      z-index: 1;
     }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+
+    .tab-panel {
+      display: none;
+      animation: fadeSlideIn 0.4s ease;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--primary), var(--secondary));
+      border-radius: 4px 0 0 4px;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--primary-light);
+    }
+
+    .card-header i {
+      font-size: 1.5rem;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 0.6rem;
+      border-radius: 12px;
+    }
+
+    .card-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .card-header .badge {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-left: auto;
+    }
 
     /* Formularios */
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      margin-bottom: 1.5rem;
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
     }
+
     .form-group {
       margin-bottom: 1rem;
       display: flex;
       flex-direction: column;
     }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
     label {
       font-weight: 600;
-      margin-bottom: 0.3rem;
-      color: #2d3748;
+      margin-bottom: 0.35rem;
+      color: var(--text);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
     }
+
+    label i {
+      color: var(--primary);
+      font-size: 0.85rem;
+      width: 18px;
+      text-align: center;
+    }
+
+    label .required {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
     select, input, textarea {
-      padding: 0.6rem 0.8rem;
-      border: 1px solid #cbd5e0;
-      border-radius: 8px;
+      padding: 0.7rem 0.9rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
       font-size: 0.95rem;
-      background: #f7fafc;
+      background: #f8fafc;
+      transition: var(--transition);
+      font-family: inherit;
     }
-    textarea { resize: vertical; }
-    .drug-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 0.6rem;
+
+    select:focus, input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+      background: white;
     }
-    .drug-item {
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* Medicamentos grid */
+    .drug-section {
+      margin-top: 1rem;
+    }
+
+    .drug-section-title {
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 0.75rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      background: #ebf4ff;
-      padding: 0.4rem 0.7rem;
-      border-radius: 8px;
+      font-size: 1rem;
     }
+
+    .drug-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 0.5rem;
+    }
+
+    .drug-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid #d1fae5;
+      transition: var(--transition);
+    }
+
+    .drug-item:hover {
+      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+      border-color: var(--primary);
+      transform: translateX(3px);
+    }
+
+    .drug-item .drug-icon {
+      color: var(--primary);
+      font-size: 0.9rem;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
     .drug-item span {
       flex: 1;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      font-weight: 500;
     }
+
     .drug-item input[type="number"] {
-      width: 70px;
-      min-width: 70px;
+      width: 65px;
+      min-width: 65px;
       text-align: center;
       flex-shrink: 0;
+      border: 2px solid #d1fae5;
+      background: white;
+      font-weight: 600;
+      color: var(--primary-dark);
     }
+
+    .drug-item input[type="number"]:focus {
+      border-color: var(--primary);
+    }
+
+    /* Checkbox */
     .checkbox-group {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      margin: 0.5rem 0;
+      gap: 0.6rem;
+      margin: 0.75rem 0;
+      padding: 0.75rem;
+      background: #f8fafc;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
     }
-    button {
-      background: #2c7a7b;
-      color: white;
+
+    .checkbox-group input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .checkbox-group label {
+      margin: 0;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    /* Botones */
+    .btn {
+      padding: 0.75rem 2rem;
       border: none;
-      padding: 0.7rem 2rem;
-      border-radius: 8px;
-      font-size: 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s;
-      margin-top: 1rem;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    button:hover { background: #1f5f5f; }
 
-    /* Tabla historial */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(13, 148, 136, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-block {
+      width: 100%;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+
+    /* Tabla */
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
       background: white;
-      border-radius: 8px;
-      overflow: hidden;
+      font-size: 0.9rem;
     }
+
+    thead {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    }
+
     th {
-      background: #2c7a7b;
       color: white;
-      padding: 0.6rem;
+      padding: 0.85rem 0.75rem;
       text-align: left;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
     }
+
+    th i {
+      margin-right: 0.3rem;
+      font-size: 0.75rem;
+    }
+
     td {
-      padding: 0.5rem;
-      border-bottom: 1px solid #e2e8f0;
+      padding: 0.7rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
     }
+
+    tbody tr {
+      transition: var(--transition);
+    }
+
+    tbody tr:hover {
+      background: var(--primary-light);
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    tbody tr:nth-child(even):hover {
+      background: var(--primary-light);
+    }
+
+    /* Estadísticas */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .chart-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: var(--transition);
+    }
+
+    .chart-card:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    .chart-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .chart-card h3 i {
+      color: var(--primary);
+    }
+
     .chart-container {
       position: relative;
-      height: 300px;
-      margin-bottom: 2rem;
+      height: 280px;
     }
-    @media (max-width: 600px) {
-      .logos img { height: 36px; }
-      .tab-btn { padding: 0.6rem 1rem; font-size: 0.9rem; }
+
+    /* Loading */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      color: var(--text-light);
+      gap: 0.5rem;
+    }
+
+    .loading i {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-light);
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      color: var(--border);
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .empty-state p {
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-dark);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      header {
+        padding: 0.75rem 1rem;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .header-left {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .logos img {
+        height: 36px;
+      }
+
+      h1 {
+        font-size: 1.2rem;
+      }
+
+      .tab-btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+      }
+
+      .tab-btn span {
+        display: none;
+      }
+
+      .tab-btn i {
+        font-size: 1.3rem;
+      }
+
+      main {
+        padding: 1rem;
+      }
+
+      .card {
+        padding: 1.25rem;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .drug-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .logos {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .logo-divider {
+        display: none;
+      }
+
+      .header-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.6rem;
+      }
+
+      .card::before {
+        width: 3px;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- Header -->
   <header>
-    <div class="logos">
-      <img src="https://i.ibb.co/qFk65j2s/LOGO-HOSPITAL.png" alt="Logo Hospital">
-      <img src="https://i.ibb.co/CKhvCqbc/LOGO-HC-DIGITAL.png" alt="Logo HC Digital">
+    <div class="header-left">
+      <div class="logos">
+        <img src="https://i.ibb.co/qFk65j2s/LOGO-HOSPITAL.png" alt="Logo Hospital">
+        <div class="logo-divider"></div>
+        <img src="https://i.ibb.co/CKhvCqbc/LOGO-HC-DIGITAL.png" alt="Logo HC Digital">
+      </div>
     </div>
-    <h1>Control de Medicación</h1>
+    <div class="header-title">
+      <i class="fas fa-capsules"></i>
+      <h1>Control de Medicación</h1>
+    </div>
+    <div class="header-badge">
+      <span class="pulse"></span>
+      Sistema Activo
+    </div>
   </header>
+
+  <!-- Disclaimer -->
   <div class="disclaimer">
-    ⚠️ Versión de prueba – Próximamente se implementará autenticación de usuario.
+    <i class="fas fa-shield-alt"></i>
+    Versión de prueba — Próximamente se implementará autenticación de usuario
+    <i class="fas fa-shield-alt"></i>
   </div>
+
+  <!-- Navegación -->
   <nav class="tabs">
-    <button class="tab-btn active" data-tab="registro">Registro</button>
-    <button class="tab-btn" data-tab="historial">Historial</button>
-    <button class="tab-btn" data-tab="estadisticas">Estadísticas</button>
+    <button class="tab-btn active" data-tab="registro">
+      <i class="fas fa-clipboard-list"></i> <span>Registro</span>
+    </button>
+    <button class="tab-btn" data-tab="historial">
+      <i class="fas fa-history"></i> <span>Historial</span>
+    </button>
+    <button class="tab-btn" data-tab="estadisticas">
+      <i class="fas fa-chart-line"></i> <span>Estadísticas</span>
+    </button>
   </nav>
+
   <main>
-    <!-- PANEL REGISTRO -->
+    <!-- ========== PANEL REGISTRO ========== -->
     <div class="tab-panel active" id="panel-registro">
       <div class="card">
-        <div class="form-group">
-          <label>Servicio donde te encontrás *</label>
-          <select id="servicio">
-            <option value="">Seleccionar...</option>
-            <option value="REANIMACION">REANIMACION</option>
-            <option value="UTI 1">UTI 1</option>
-            <option value="QUIROFANO">QUIROFANO</option>
-            <option value="UCO">UCO</option>
-            <option value="Otro">Otro</option>
-          </select>
+        <div class="card-header">
+          <i class="fas fa-file-prescription"></i>
+          <h2>Nuevo Registro</h2>
+          <span class="badge">Formulario</span>
         </div>
-        <div class="form-group">
-          <label>Tipo de acción *</label>
-          <select id="tipoAccion">
-            <option value="">Seleccionar...</option>
-            <option value="Control de Stock en Servicio">Control de Stock en Servicio</option>
-            <option value="Control de Stock en Carro de Paro">Control de Stock en Carro de Paro</option>
-            <option value="Salida de Medicación a Paciente">Salida de Medicación a Paciente</option>
-            <option value="Préstamo a Otro Servicio">Préstamo a Otro Servicio</option>
-            <option value="Reposición / Reingreso de Stock">Reposición / Reingreso de Stock</option>
-          </select>
+        
+        <div class="form-grid">
+          <div class="form-group">
+            <label><i class="fas fa-hospital"></i> Servicio donde te encontrás <span class="required">*</span></label>
+            <select id="servicio">
+              <option value="">Seleccionar servicio...</option>
+              <option value="REANIMACION">🏥 REANIMACION</option>
+              <option value="UTI 1">🩺 UTI 1</option>
+              <option value="QUIROFANO">🔪 QUIROFANO</option>
+              <option value="UCO">❤️ UCO</option>
+              <option value="Otro">📋 Otro</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label><i class="fas fa-tasks"></i> Tipo de acción <span class="required">*</span></label>
+            <select id="tipoAccion">
+              <option value="">Seleccionar acción...</option>
+              <option value="Control de Stock en Servicio">📦 Control de Stock en Servicio</option>
+              <option value="Control de Stock en Carro de Paro">🚑 Control de Stock en Carro de Paro</option>
+              <option value="Salida de Medicación a Paciente">💊 Salida de Medicación a Paciente</option>
+              <option value="Préstamo a Otro Servicio">🔄 Préstamo a Otro Servicio</option>
+              <option value="Reposición / Reingreso de Stock">📥 Reposición / Reingreso de Stock</option>
+            </select>
+          </div>
         </div>
+        
         <div id="campos-dinamicos"></div>
-        <button id="btn-enviar" style="display:none;">Enviar Registro</button>
+        
+        <button id="btn-enviar" class="btn btn-primary btn-block" style="display:none;">
+          <i class="fas fa-paper-plane"></i> Enviar Registro
+        </button>
       </div>
     </div>
 
-    <!-- PANEL HISTORIAL -->
+    <!-- ========== PANEL HISTORIAL ========== -->
     <div class="tab-panel" id="panel-historial">
       <div class="card">
-        <h2>Últimos registros</h2>
-        <div style="overflow-x:auto;" id="tabla-container"></div>
+        <div class="card-header">
+          <i class="fas fa-history"></i>
+          <h2>Últimos Registros</h2>
+          <span class="badge">Historial</span>
+        </div>
+        <div id="tabla-container">
+          <div class="loading">
+            <i class="fas fa-spinner"></i> Cargando registros...
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- PANEL ESTADÍSTICAS -->
+    <!-- ========== PANEL ESTADÍSTICAS ========== -->
     <div class="tab-panel" id="panel-estadisticas">
-      <h2>Dashboard en tiempo real</h2>
-      <div class="chart-container"><canvas id="chart-consumo"></canvas></div>
-      <div class="chart-container"><canvas id="chart-prestamos"></canvas></div>
-      <div class="chart-container"><canvas id="chart-stock"></canvas></div>
-      <div class="chart-container"><canvas id="chart-acciones"></canvas></div>
+      <div class="stats-grid">
+        <div class="chart-card">
+          <h3><i class="fas fa-pills"></i> Consumo de Medicamentos (30 días)</h3>
+          <div class="chart-container"><canvas id="chart-consumo"></canvas></div>
+        </div>
+        
+        <div class="chart-card">
+          <h3><i class="fas fa-exchange-alt"></i> Préstamos por Servicio</h3>
+          <div class="chart-container"><canvas id="chart-prestamos"></canvas></div>
+        </div>
+        
+        <div class="chart-card">
+          <h3><i class="fas fa-exclamation-triangle"></i> Controles con Diferencias (%)</h3>
+          <div class="chart-container"><canvas id="chart-stock"></canvas></div>
+        </div>
+        
+        <div class="chart-card">
+          <h3><i class="fas fa-ambulance"></i> Acciones por Tipo</h3>
+          <div class="chart-container"><canvas id="chart-acciones"></canvas></div>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -244,7 +873,6 @@
     // ========== CONFIGURACIÓN ==========
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxay8AtRfBiuwnHvfUu5PuAwhncQ73HQLAXEHrpbSeU3nMCTI2UASTwrfAYJvvKbw/exec';
 
-    // Lista unificada de medicamentos
     const DRUGS = [
       "Bromuro De Pancuronio 2 mg/ml amp (Refrigerado)",
       "Fentanilo 0,25 mcg/ml amp",
@@ -289,90 +917,154 @@
       btnEnviar.style.display = 'none';
       if (!tipo) return;
 
-      // Campos comunes: agente y turno
-      camposDinamicos.innerHTML += `
+      let html = '<div class="form-grid">';
+      
+      // Campos comunes
+      html += `
         <div class="form-group">
-          <label>Agente (Apellido y Nombre) *</label>
-          <input type="text" id="agente" required>
+          <label><i class="fas fa-user-md"></i> Agente (Apellido y Nombre) <span class="required">*</span></label>
+          <input type="text" id="agente" placeholder="Ej: García, Juan" required>
         </div>
         <div class="form-group">
-          <label>Turno *</label>
-          <select id="turno"><option value="Mañana">Mañana</option><option value="Tarde">Tarde</option><option value="Noche">Noche</option></select>
+          <label><i class="fas fa-clock"></i> Turno <span class="required">*</span></label>
+          <select id="turno">
+            <option value="Mañana">☀️ Mañana</option>
+            <option value="Tarde">⛅ Tarde</option>
+            <option value="Noche">🌙 Noche</option>
+          </select>
         </div>
       `;
 
       if (tipo.includes('Control de Stock')) {
-        camposDinamicos.innerHTML += `
-          <div class="checkbox-group">
-            <input type="checkbox" id="stockCoincide"> <label for="stockCoincide">El stock coincide</label>
+        html += `
+          <div class="form-group full-width">
+            <div class="checkbox-group">
+              <input type="checkbox" id="stockCoincide">
+              <label for="stockCoincide"><i class="fas fa-check-circle"></i> El stock coincide con lo esperado</label>
+            </div>
           </div>
-          <div class="form-group" id="obs-group" style="display:none;">
-            <label>Observaciones (diferencias)</label>
-            <textarea id="observaciones"></textarea>
+          <div class="form-group full-width" id="obs-group" style="display:none;">
+            <label><i class="fas fa-comment-alt"></i> Observaciones (diferencias encontradas)</label>
+            <textarea id="observaciones" placeholder="Describa las diferencias encontradas..."></textarea>
           </div>
-          ${generarDrugInputs()}
         `;
-        document.getElementById('stockCoincide').addEventListener('change', function(){
-          document.getElementById('obs-group').style.display = this.checked ? 'none' : 'block';
-        });
+        html += '</div>';
+        html += generarDrugInputs();
+        
+        setTimeout(() => {
+          const check = document.getElementById('stockCoincide');
+          if (check) {
+            check.addEventListener('change', function(){
+              document.getElementById('obs-group').style.display = this.checked ? 'none' : 'block';
+            });
+          }
+        }, 0);
+        
       } else if (tipo === 'Salida de Medicación a Paciente') {
-        camposDinamicos.innerHTML += `
-          <div class="form-group"><label>Paciente (Nombre y Apellido) *</label><input id="paciente" required></div>
-          <div class="form-group"><label>DNI</label><input id="dni"></div>
-          <div class="form-group"><label>N° Cama / Hab</label><input id="cama"></div>
-          <div class="form-group"><label>Médico prescriptor *</label><input id="medico" required></div>
-          <div class="form-group"><label>Matrícula profesional *</label><input id="matricula" required></div>
-          <div class="form-group"><label>Diagnóstico</label><input id="diagnostico"></div>
-          ${generarDrugInputs()}
+        html += `
+          <div class="form-group">
+            <label><i class="fas fa-user"></i> Paciente (Nombre y Apellido) <span class="required">*</span></label>
+            <input id="paciente" placeholder="Ej: Pérez, María" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-id-card"></i> DNI</label>
+            <input id="dni" placeholder="Número de documento">
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-bed"></i> N° Cama / Hab</label>
+            <input id="cama" placeholder="Ej: 302-A">
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-stethoscope"></i> Médico prescriptor <span class="required">*</span></label>
+            <input id="medico" placeholder="Nombre del médico" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-certificate"></i> Matrícula profesional <span class="required">*</span></label>
+            <input id="matricula" placeholder="N° de matrícula" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-notes-medical"></i> Diagnóstico</label>
+            <input id="diagnostico" placeholder="Diagnóstico del paciente">
+          </div>
         `;
+        html += '</div>';
+        html += generarDrugInputs();
+        
       } else if (tipo === 'Préstamo a Otro Servicio') {
-        camposDinamicos.innerHTML += `
-          <div class="form-group"><label>Agente que solicita *</label><input id="agenteSolicitante" required></div>
-          <div class="form-group"><label>Servicio que solicita *</label>
-            <select id="servDestino"><option value="">Seleccionar...</option>
-              <option value="REANIMACION">REANIMACION</option><option value="UTI 1">UTI 1</option>
-              <option value="QUIROFANO">QUIROFANO</option><option value="UCO">UCO</option><option value="Otro">Otro</option>
-            </select></div>
-          ${generarDrugInputs()}
+        html += `
+          <div class="form-group">
+            <label><i class="fas fa-user-tag"></i> Agente que solicita <span class="required">*</span></label>
+            <input id="agenteSolicitante" placeholder="Nombre del solicitante" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-building"></i> Servicio que solicita <span class="required">*</span></label>
+            <select id="servDestino">
+              <option value="">Seleccionar...</option>
+              <option value="REANIMACION">🏥 REANIMACION</option>
+              <option value="UTI 1">🩺 UTI 1</option>
+              <option value="QUIROFANO">🔪 QUIROFANO</option>
+              <option value="UCO">❤️ UCO</option>
+              <option value="Otro">📋 Otro</option>
+            </select>
+          </div>
         `;
+        html += '</div>';
+        html += generarDrugInputs();
+        
       } else if (tipo.includes('Reposición')) {
-        camposDinamicos.innerHTML += `
-          <div class="form-group"><label>Acción realizada *</label>
+        html += `
+          <div class="form-group full-width">
+            <label><i class="fas fa-redo-alt"></i> Acción realizada <span class="required">*</span></label>
             <select id="accionRepo">
-              <option value="Reposición con RP de farmacia">Reposición con RP de farmacia</option>
-              <option value="Retorno de medicación de paciente al stock">Retorno de medicación de paciente al stock</option>
-              <option value="Se recibe medicación de otro servicio">Se recibe medicación de otro servicio</option>
-              <option value="Otro">Otro</option>
-            </select></div>
-          ${generarDrugInputs()}
+              <option value="Reposición con RP de farmacia">📋 Reposición con RP de farmacia</option>
+              <option value="Retorno de medicación de paciente al stock">🏥 Retorno de medicación de paciente al stock</option>
+              <option value="Se recibe medicación de otro servicio">🔄 Se recibe medicación de otro servicio</option>
+              <option value="Otro">📝 Otro</option>
+            </select>
+          </div>
         `;
+        html += '</div>';
+        html += generarDrugInputs();
       }
-      btnEnviar.style.display = 'block';
+
+      camposDinamicos.innerHTML = html;
+      btnEnviar.style.display = 'flex';
     }
 
     function generarDrugInputs() {
-      let html = '<label style="margin-top:1rem;">Medicamentos (cantidades)</label><div class="drug-grid">';
+      let html = `
+        <div class="drug-section">
+          <div class="drug-section-title">
+            <i class="fas fa-capsules"></i> Medicamentos (indicar cantidades)
+          </div>
+          <div class="drug-grid">
+      `;
       DRUGS.forEach(d => {
-        html += `<div class="drug-item"><span>${d}</span><input type="number" min="0" value="0" data-drug="${d}"></div>`;
+        html += `
+          <div class="drug-item">
+            <i class="fas fa-tablets drug-icon"></i>
+            <span>${d}</span>
+            <input type="number" min="0" value="0" data-drug="${d}" placeholder="0">
+          </div>
+        `;
       });
-      html += '</div>';
+      html += '</div></div>';
       return html;
     }
 
-    // ========== ENVÍO DEL FORMULARIO (POST CON no-cors) ==========
+    // ========== ENVÍO DEL FORMULARIO ==========
     btnEnviar.addEventListener('click', async () => {
       const servicio = servicioSelect.value;
       const tipo = tipoAccionSelect.value;
-      if (!servicio || !tipo) return alert('Completá servicio y tipo de acción.');
+      if (!servicio || !tipo) return alert('⚠️ Completá servicio y tipo de acción.');
 
       const agente = document.getElementById('agente')?.value.trim();
       const turno = document.getElementById('turno')?.value;
-      if (!agente || !turno) return alert('Completá agente y turno.');
+      if (!agente || !turno) return alert('⚠️ Completá agente y turno.');
 
       let datosAdicionales = '';
       let medicamentos = '';
 
-      // Recolectar medicamentos con cantidad >0
       const drugInputs = document.querySelectorAll('[data-drug]');
       const meds = [];
       drugInputs.forEach(inp => {
@@ -382,7 +1074,7 @@
       medicamentos = meds.join(', ');
 
       if (tipo.includes('Control de Stock')) {
-        const coincide = document.getElementById('stockCoincide').checked ? 'Sí' : 'No';
+        const coincide = document.getElementById('stockCoincide')?.checked ? 'Sí' : 'No';
         const obs = document.getElementById('observaciones')?.value || '';
         datosAdicionales = `Coincide: ${coincide}${obs ? ' | Observaciones: ' + obs : ''}`;
       } else if (tipo === 'Salida de Medicación a Paciente') {
@@ -404,16 +1096,22 @@
 
       const payload = { servicio, tipo, agente, turno, datosAdicionales, medicamentos };
 
+      btnEnviar.disabled = true;
+      btnEnviar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
       try {
         await fetch(SCRIPT_URL, {
           method: 'POST',
           mode: 'no-cors',
           body: JSON.stringify(payload)
         });
-        alert('Registro guardado correctamente.');
+        alert('✅ Registro guardado correctamente.');
         limpiarFormulario();
       } catch(e) {
-        alert('Error de conexión.');
+        alert('❌ Error de conexión.');
+      } finally {
+        btnEnviar.disabled = false;
+        btnEnviar.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Registro';
       }
     });
 
@@ -424,31 +1122,51 @@
       btnEnviar.style.display = 'none';
     }
 
-    // ========== CARGAR HISTORIAL (JSONP) ==========
+    // ========== CARGAR HISTORIAL ==========
     function cargarHistorial() {
       const container = document.getElementById('tabla-container');
-      container.innerHTML = '<p>Cargando...</p>';
+      container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Cargando registros...</div>';
       
       const callbackName = 'historialCallback_' + Date.now();
       
       window[callbackName] = function(data) {
         if (!data || !data.length) {
-          container.innerHTML = '<p>No hay registros aún.</p>';
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-clipboard"></i>
+              <p>No hay registros aún</p>
+            </div>
+          `;
           return;
         }
-        let html = '<table><thead><tr><th>Fecha</th><th>Servicio</th><th>Tipo</th><th>Agente</th><th>Turno</th><th>Detalle</th><th>Medicamentos</th></tr></thead><tbody>';
+        let html = `
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th><i class="far fa-calendar-alt"></i> Fecha</th>
+                  <th><i class="fas fa-hospital"></i> Servicio</th>
+                  <th><i class="fas fa-tag"></i> Tipo</th>
+                  <th><i class="fas fa-user-md"></i> Agente</th>
+                  <th><i class="fas fa-clock"></i> Turno</th>
+                  <th><i class="fas fa-info-circle"></i> Detalle</th>
+                  <th><i class="fas fa-capsules"></i> Medicamentos</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
         data.forEach(row => {
           html += `<tr>
             <td>${row.FECHAHORA || ''}</td>
-            <td>${row.SERVICIO || ''}</td>
+            <td><strong>${row.SERVICIO || ''}</strong></td>
             <td>${row.TIPO || ''}</td>
             <td>${row.AGENTE || ''}</td>
             <td>${row.TURNO || ''}</td>
-            <td>${row.DATOS_ADICIONALES || ''}</td>
-            <td>${row.MEDICAMENTOS || ''}</td>
+            <td>${row.DATOS_ADICIONALES || '-'}</td>
+            <td>${row.MEDICAMENTOS || '-'}</td>
           </tr>`;
         });
-        html += '</tbody></table>';
+        html += '</tbody></table></div>';
         container.innerHTML = html;
         delete window[callbackName];
       };
@@ -456,13 +1174,13 @@
       const script = document.createElement('script');
       script.src = `${SCRIPT_URL}?action=historial&limit=50&callback=${callbackName}`;
       script.onerror = () => {
-        container.innerHTML = '<p>Error al cargar historial.</p>';
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Error al cargar historial</p></div>';
         delete window[callbackName];
       };
       document.body.appendChild(script);
     }
 
-    // ========== ESTADÍSTICAS (JSONP + CHARTS) ==========
+    // ========== ESTADÍSTICAS ==========
     let intervalID;
     let chartInstances = {};
 
@@ -496,6 +1214,11 @@
       document.body.appendChild(script);
     }
 
+    const chartColors = [
+      '#0d9488', '#1e40af', '#f59e0b', '#ef4444', '#10b981',
+      '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#84cc16'
+    ];
+
     function renderConsumo(data) {
       const canvas = document.getElementById('chart-consumo');
       if (chartInstances.consumo) chartInstances.consumo.destroy();
@@ -503,19 +1226,25 @@
       if (fechas.length === 0) return;
       const allMeds = new Set();
       fechas.forEach(f => Object.keys(data[f]).forEach(m => allMeds.add(m)));
-      const datasets = [];
-      allMeds.forEach(med => {
-        datasets.push({
-          label: med,
-          data: fechas.map(f => data[f][med] || 0),
-          borderColor: randomColor(),
-          fill: false
-        });
-      });
+      const datasets = Array.from(allMeds).map((med, i) => ({
+        label: med.length > 25 ? med.substring(0, 25) + '...' : med,
+        data: fechas.map(f => data[f][med] || 0),
+        borderColor: chartColors[i % chartColors.length],
+        backgroundColor: chartColors[i % chartColors.length] + '20',
+        fill: false,
+        tension: 0.3,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 6
+      }));
       chartInstances.consumo = new Chart(canvas, {
         type: 'line',
         data: { labels: fechas, datasets },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10, font: { size: 10 } } } }
+        }
       });
     }
 
@@ -526,19 +1255,25 @@
       if (fechas.length === 0) return;
       const servicios = new Set();
       fechas.forEach(f => Object.keys(data[f]).forEach(s => servicios.add(s)));
-      const datasets = [];
-      servicios.forEach(serv => {
-        datasets.push({
-          label: serv,
-          data: fechas.map(f => data[f][serv] || 0),
-          borderColor: randomColor(),
-          fill: false
-        });
-      });
+      const datasets = Array.from(servicios).map((serv, i) => ({
+        label: serv,
+        data: fechas.map(f => data[f][serv] || 0),
+        borderColor: chartColors[i % chartColors.length],
+        backgroundColor: chartColors[i % chartColors.length] + '20',
+        fill: false,
+        tension: 0.3,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 6
+      }));
       chartInstances.prestamos = new Chart(canvas, {
         type: 'line',
         data: { labels: fechas, datasets },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10, font: { size: 10 } } } }
+        }
       });
     }
 
@@ -549,20 +1284,30 @@
       if (fechas.length === 0) return;
       const porcentajes = fechas.map(f => {
         const d = data[f];
-        return d.total ? (d.conDif / d.total * 100).toFixed(1) : 0;
+        return d.total ? parseFloat((d.conDif / d.total * 100).toFixed(1)) : 0;
       });
       chartInstances.stock = new Chart(canvas, {
         type: 'line',
         data: {
           labels: fechas,
           datasets: [{
-            label: '% controles con diferencia',
+            label: '% Controles con diferencias',
             data: porcentajes,
-            borderColor: '#e53e3e',
-            fill: false
+            borderColor: '#ef4444',
+            backgroundColor: '#ef444420',
+            fill: true,
+            tension: 0.3,
+            borderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 7
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } },
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } } }
+        }
       });
     }
 
@@ -573,24 +1318,26 @@
       if (fechas.length === 0) return;
       const tipos = new Set();
       fechas.forEach(f => Object.keys(data[f]).forEach(t => tipos.add(t)));
-      const datasets = [];
-      tipos.forEach(tipo => {
-        datasets.push({
-          label: tipo,
-          data: fechas.map(f => data[f][tipo] || 0),
-          borderColor: randomColor(),
-          fill: false
-        });
-      });
+      const datasets = Array.from(tipos).map((tipo, i) => ({
+        label: tipo.length > 30 ? tipo.substring(0, 30) + '...' : tipo,
+        data: fechas.map(f => data[f][tipo] || 0),
+        borderColor: chartColors[i % chartColors.length],
+        backgroundColor: chartColors[i % chartColors.length] + '20',
+        fill: false,
+        tension: 0.3,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 6
+      }));
       chartInstances.acciones = new Chart(canvas, {
         type: 'line',
         data: { labels: fechas, datasets },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10, font: { size: 10 } } } }
+        }
       });
-    }
-
-    function randomColor() {
-      return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
     }
   </script>
 </body>
