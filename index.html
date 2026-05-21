@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farmacia - Control de Medicación</title>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f4f8;
+      color: #1a2b3c;
+      min-height:100vh;
+      display:flex; flex-direction:column;
+    }
+    header {
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      border-bottom: 4px solid #2c7a7b;
+    }
+    .logos {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    .logos img { height: 48px; object-fit: contain; }
+    h1 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #2c7a7b;
+    }
+    .disclaimer {
+      background: #fff3cd;
+      color: #856404;
+      padding: 0.5rem 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    nav.tabs {
+      display: flex;
+      background: #ffffff;
+      border-bottom: 1px solid #cbd5e0;
+      padding: 0 1rem;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #4a5568;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      color: #2c7a7b;
+      border-bottom-color: #2c7a7b;
+    }
+    main {
+      flex:1;
+      padding: 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Formularios */
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      color: #2d3748;
+    }
+    select, input, textarea {
+      padding: 0.6rem 0.8rem;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: #f7fafc;
+    }
+    textarea { resize: vertical; }
+    .drug-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 0.6rem;
+    }
+    .drug-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #ebf4ff;
+      padding: 0.4rem 0.7rem;
+      border-radius: 8px;
+    }
+    .drug-item input[type="number"] {
+      width: 70px;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0.5rem 0;
+    }
+    button {
+      background: #2c7a7b;
+      color: white;
+      border: none;
+      padding: 0.7rem 2rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 1rem;
+    }
+    button:hover { background: #1f5f5f; }
+
+    /* Tabla historial */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th {
+      background: #2c7a7b;
+      color: white;
+      padding: 0.6rem;
+      text-align: left;
+    }
+    td {
+      padding: 0.5rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 600px) {
+      .logos img { height: 36px; }
+      .tab-btn { padding: 0.6rem 1rem; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logos">
+      <img src="https://i.ibb.co/qFk65j2s/LOGO-HOSPITAL.png" alt="Logo Hospital">
+      <img src="https://i.ibb.co/CKhvCqbc/LOGO-HC-DIGITAL.png" alt="Logo HC Digital">
+    </div>
+    <h1>Control de Medicación</h1>
+  </header>
+  <div class="disclaimer">
+    ⚠️ Versión de prueba – Próximamente se implementará autenticación de usuario.
+  </div>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="registro">Registro</button>
+    <button class="tab-btn" data-tab="historial">Historial</button>
+    <button class="tab-btn" data-tab="estadisticas">Estadísticas</button>
+  </nav>
+  <main>
+    <!-- PANEL REGISTRO -->
+    <div class="tab-panel active" id="panel-registro">
+      <div class="card">
+        <div class="form-group">
+          <label>Servicio donde te encontrás *</label>
+          <select id="servicio">
+            <option value="">Seleccionar...</option>
+            <option value="REANIMACION">REANIMACION</option>
+            <option value="UTI 1">UTI 1</option>
+            <option value="QUIROFANO">QUIROFANO</option>
+            <option value="UCO">UCO</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipo de acción *</label>
+          <select id="tipoAccion">
+            <option value="">Seleccionar...</option>
+            <option value="Control de Stock en Servicio">Control de Stock en Servicio</option>
+            <option value="Control de Stock en Carro de Paro">Control de Stock en Carro de Paro</option>
+            <option value="Salida de Medicación a Paciente">Salida de Medicación a Paciente</option>
+            <option value="Préstamo a Otro Servicio">Préstamo a Otro Servicio</option>
+            <option value="Reposición / Reingreso de Stock">Reposición / Reingreso de Stock</option>
+          </select>
+        </div>
+        <div id="campos-dinamicos"></div>
+        <button id="btn-enviar" style="display:none;">Enviar Registro</button>
+      </div>
+    </div>
+
+    <!-- PANEL HISTORIAL -->
+    <div class="tab-panel" id="panel-historial">
+      <div class="card">
+        <h2>Últimos registros</h2>
+        <div style="overflow-x:auto;" id="tabla-container"></div>
+      </div>
+    </div>
+
+    <!-- PANEL ESTADÍSTICAS -->
+    <div class="tab-panel" id="panel-estadisticas">
+      <h2>Dashboard en tiempo real</h2>
+      <div class="chart-container"><canvas id="chart-consumo"></canvas></div>
+      <div class="chart-container"><canvas id="chart-prestamos"></canvas></div>
+      <div class="chart-container"><canvas id="chart-stock"></canvas></div>
+      <div class="chart-container"><canvas id="chart-acciones"></canvas></div>
+    </div>
+  </main>
+
+  <script>
+    // ========== CONFIGURACIÓN ==========
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxay8AtRfBiuwnHvfUu5PuAwhncQ73HQLAXEHrpbSeU3nMCTI2UASTwrfAYJvvKbw/exec'; // <-- REEMPLAZAR
+
+    // Lista unificada de medicamentos
+    const DRUGS = [
+      "Bromuro De Pancuronio 2 mg/ml amp (Refrigerado)",
+      "Fentanilo 0,25 mcg/ml amp",
+      "Ketamina 500 mg/10 ml fco amp",
+      "Lorazepam 4 mg/ml amp (Refrigerado)",
+      "Midazolam 15 mg/ml",
+      "Morfina Clorhidrato 10 mg/ml amp",
+      "Remifentanilo 5 mg fco amp",
+      "Propofol 1% / 20 ml Iny.amp (Refrigerado)",
+      "Succinilcolina 100 mg/ml amp (Refrigerado)",
+      "Atracurium 50 mg/5ml Iny.amp"
+    ];
+
+    // ========== ELEMENTOS ==========
+    const tabs = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.tab-panel');
+    const servicioSelect = document.getElementById('servicio');
+    const tipoAccionSelect = document.getElementById('tipoAccion');
+    const camposDinamicos = document.getElementById('campos-dinamicos');
+    const btnEnviar = document.getElementById('btn-enviar');
+
+    // ========== NAVEGACIÓN POR TABS ==========
+    tabs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabs.forEach(b => b.classList.remove('active'));
+        panels.forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
+        if (btn.dataset.tab === 'historial') cargarHistorial();
+        if (btn.dataset.tab === 'estadisticas') { cargarEstadisticas(); iniciarActualizacion(); }
+        else detenerActualizacion();
+      });
+    });
+
+    // ========== GENERAR FORMULARIO SEGÚN ACCIÓN ==========
+    tipoAccionSelect.addEventListener('change', renderizarFormulario);
+    servicioSelect.addEventListener('change', () => { if(tipoAccionSelect.value) renderizarFormulario(); });
+
+    function renderizarFormulario() {
+      const tipo = tipoAccionSelect.value;
+      camposDinamicos.innerHTML = '';
+      btnEnviar.style.display = 'none';
+      if (!tipo) return;
+
+      // Campos comunes: agente y turno
+      camposDinamicos.innerHTML += `
+        <div class="form-group">
+          <label>Agente (Apellido y Nombre) *</label>
+          <input type="text" id="agente" required>
+        </div>
+        <div class="form-group">
+          <label>Turno *</label>
+          <select id="turno"><option value="Mañana">Mañana</option><option value="Tarde">Tarde</option><option value="Noche">Noche</option></select>
+        </div>
+      `;
+
+      if (tipo.includes('Control de Stock')) {
+        camposDinamicos.innerHTML += `
+          <div class="checkbox-group">
+            <input type="checkbox" id="stockCoincide"> <label for="stockCoincide">El stock coincide</label>
+          </div>
+          <div class="form-group" id="obs-group" style="display:none;">
+            <label>Observaciones (diferencias)</label>
+            <textarea id="observaciones"></textarea>
+          </div>
+          ${generarDrugInputs()}
+        `;
+        document.getElementById('stockCoincide').addEventListener('change', function(){
+          document.getElementById('obs-group').style.display = this.checked ? 'none' : 'block';
+        });
+      } else if (tipo === 'Salida de Medicación a Paciente') {
+        camposDinamicos.innerHTML += `
+          <div class="form-group"><label>Paciente (Nombre y Apellido) *</label><input id="paciente" required></div>
+          <div class="form-group"><label>DNI</label><input id="dni"></div>
+          <div class="form-group"><label>N° Cama / Hab</label><input id="cama"></div>
+          <div class="form-group"><label>Médico prescriptor *</label><input id="medico" required></div>
+          <div class="form-group"><label>Matrícula profesional *</label><input id="matricula" required></div>
+          <div class="form-group"><label>Diagnóstico</label><input id="diagnostico"></div>
+          ${generarDrugInputs()}
+        `;
+      } else if (tipo === 'Préstamo a Otro Servicio') {
+        camposDinamicos.innerHTML += `
+          <div class="form-group"><label>Agente que solicita *</label><input id="agenteSolicitante" required></div>
+          <div class="form-group"><label>Servicio que solicita *</label>
+            <select id="servDestino"><option value="">Seleccionar...</option>
+              <option value="REANIMACION">REANIMACION</option><option value="UTI 1">UTI 1</option>
+              <option value="QUIROFANO">QUIROFANO</option><option value="UCO">UCO</option><option value="Otro">Otro</option>
+            </select></div>
+          ${generarDrugInputs()}
+        `;
+      } else if (tipo.includes('Reposición')) {
+        camposDinamicos.innerHTML += `
+          <div class="form-group"><label>Acción realizada *</label>
+            <select id="accionRepo">
+              <option value="Reposición con RP de farmacia">Reposición con RP de farmacia</option>
+              <option value="Retorno de medicación de paciente al stock">Retorno de medicación de paciente al stock</option>
+              <option value="Se recibe medicación de otro servicio">Se recibe medicación de otro servicio</option>
+              <option value="Otro">Otro</option>
+            </select></div>
+          ${generarDrugInputs()}
+        `;
+      }
+      btnEnviar.style.display = 'block';
+    }
+
+    function generarDrugInputs() {
+      let html = '<label style="margin-top:1rem;">Medicamentos (cantidades)</label><div class="drug-grid">';
+      DRUGS.forEach(d => {
+        html += `<div class="drug-item"><span>${d}</span><input type="number" min="0" value="0" data-drug="${d}"></div>`;
+      });
+      html += '</div>';
+      return html;
+    }
+
+    // ========== ENVÍO DEL FORMULARIO ==========
+    btnEnviar.addEventListener('click', async () => {
+      const servicio = servicioSelect.value;
+      const tipo = tipoAccionSelect.value;
+      if (!servicio || !tipo) return alert('Completá servicio y tipo de acción.');
+
+      const agente = document.getElementById('agente')?.value.trim();
+      const turno = document.getElementById('turno')?.value;
+      if (!agente || !turno) return alert('Completá agente y turno.');
+
+      let datosAdicionales = '';
+      let medicamentos = '';
+
+      // Recolectar medicamentos con cantidad >0
+      const drugInputs = document.querySelectorAll('[data-drug]');
+      const meds = [];
+      drugInputs.forEach(inp => {
+        const cant = parseInt(inp.value) || 0;
+        if (cant > 0) meds.push(`${inp.dataset.drug}: ${cant}`);
+      });
+      medicamentos = meds.join(', ');
+
+      if (tipo.includes('Control de Stock')) {
+        const coincide = document.getElementById('stockCoincide').checked ? 'Sí' : 'No';
+        const obs = document.getElementById('observaciones')?.value || '';
+        datosAdicionales = `Coincide: ${coincide}${obs ? ' | Observaciones: ' + obs : ''}`;
+      } else if (tipo === 'Salida de Medicación a Paciente') {
+        const paciente = document.getElementById('paciente')?.value || '';
+        const dni = document.getElementById('dni')?.value || '';
+        const cama = document.getElementById('cama')?.value || '';
+        const medico = document.getElementById('medico')?.value || '';
+        const matricula = document.getElementById('matricula')?.value || '';
+        const diagnostico = document.getElementById('diagnostico')?.value || '';
+        datosAdicionales = `Paciente: ${paciente} | DNI: ${dni} | Cama: ${cama} | Médico: ${medico} | Matrícula: ${matricula} | Diagnóstico: ${diagnostico}`;
+      } else if (tipo === 'Préstamo a Otro Servicio') {
+        const solicitante = document.getElementById('agenteSolicitante')?.value || '';
+        const destino = document.getElementById('servDestino')?.value || '';
+        datosAdicionales = `Solicitado por: ${solicitante} | Servicio destino: ${destino}`;
+      } else if (tipo.includes('Reposición')) {
+        const accion = document.getElementById('accionRepo')?.value || '';
+        datosAdicionales = `Acción: ${accion}`;
+      }
+
+      const payload = { servicio, tipo, agente, turno, datosAdicionales, medicamentos };
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.result === 'ok') {
+          alert('Registro guardado correctamente.');
+          limpiarFormulario();
+        } else {
+          alert('Error: ' + json.message);
+        }
+      } catch(e) {
+        alert('Error de conexión.');
+      }
+    });
+
+    function limpiarFormulario() {
+      servicioSelect.value = '';
+      tipoAccionSelect.value = '';
+      camposDinamicos.innerHTML = '';
+      btnEnviar.style.display = 'none';
+    }
+
+    // ========== CARGAR HISTORIAL ==========
+    async function cargarHistorial() {
+      const container = document.getElementById('tabla-container');
+      container.innerHTML = '<p>Cargando...</p>';
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=historial&limit=50`);
+        const data = await res.json();
+        if (!data.length) {
+          container.innerHTML = '<p>No hay registros aún.</p>';
+          return;
+        }
+        let html = '<table><thead><tr><th>Fecha</th><th>Servicio</th><th>Tipo</th><th>Agente</th><th>Turno</th><th>Detalle</th><th>Medicamentos</th></tr></thead><tbody>';
+        data.forEach(row => {
+          html += `<tr>
+            <td>${row.FECHAHORA}</td><td>${row.SERVICIO}</td><td>${row.TIPO}</td>
+            <td>${row.AGENTE}</td><td>${row.TURNO}</td><td>${row.DATOS_ADICIONALES}</td>
+            <td>${row.MEDICAMENTOS}</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch(e) {
+        container.innerHTML = '<p>Error al cargar historial.</p>';
+      }
+    }
+
+    // ========== ESTADÍSTICAS (CHARTS) ==========
+    let intervalID;
+    function iniciarActualizacion() {
+      cargarEstadisticas();
+      intervalID = setInterval(cargarEstadisticas, 30000);
+    }
+    function detenerActualizacion() {
+      clearInterval(intervalID);
+    }
+
+    async function cargarEstadisticas() {
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=stats`);
+        const stats = await res.json();
+        renderConsumo(stats.consumoDiario || {});
+        renderPrestamos(stats.prestamosPorServicio || {});
+        renderStock(stats.controlesStock || {});
+        renderAcciones(stats.accionesDiarias || {});
+      } catch(e) { console.error(e); }
+    }
+
+    function renderConsumo(data) {
+      const fechas = Object.keys(data).sort();
+      const datasets = [];
+      const allMeds = new Set();
+      fechas.forEach(f => Object.keys(data[f]).forEach(m => allMeds.add(m)));
+      allMeds.forEach(med => {
+        datasets.push({
+          label: med,
+          data: fechas.map(f => data[f][med] || 0),
+          borderColor: randomColor(),
+          fill: false
+        });
+      });
+      new Chart(document.getElementById('chart-consumo'), { type:'line', data:{labels:fechas, datasets} });
+    }
+
+    function renderPrestamos(data) {
+      const fechas = Object.keys(data).sort();
+      const servicios = new Set();
+      fechas.forEach(f => Object.keys(data[f]).forEach(s => servicios.add(s)));
+      const datasets = [];
+      servicios.forEach(serv => {
+        datasets.push({
+          label: serv,
+          data: fechas.map(f => data[f][serv] || 0),
+          borderColor: randomColor(),
+          fill: false
+        });
+      });
+      new Chart(document.getElementById('chart-prestamos'), { type:'line', data:{labels:fechas, datasets} });
+    }
+
+    function renderStock(data) {
+      const fechas = Object.keys(data).sort();
+      const porcentajes = fechas.map(f => {
+        const d = data[f];
+        return d.total ? (d.conDif/d.total*100).toFixed(1) : 0;
+      });
+      new Chart(document.getElementById('chart-stock'), {
+        type:'line',
+        data:{ labels:fechas, datasets:[{ label:'% controles con diferencia', data:porcentajes, borderColor:'#e53e3e' }] }
+      });
+    }
+
+    function renderAcciones(data) {
+      const fechas = Object.keys(data).sort();
+      const tipos = new Set();
+      fechas.forEach(f => Object.keys(data[f]).forEach(t => tipos.add(t)));
+      const datasets = [];
+      tipos.forEach(tipo => {
+        datasets.push({
+          label: tipo,
+          data: fechas.map(f => data[f][tipo] || 0),
+          borderColor: randomColor(),
+          fill: false
+        });
+      });
+      new Chart(document.getElementById('chart-acciones'), { type:'line', data:{labels:fechas, datasets} });
+    }
+
+    function randomColor() {
+      return '#' + Math.floor(Math.random()*16777215).toString(16);
+    }
+  </script>
+</body>
+</html>
