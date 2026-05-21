@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Farmacia - Control de Medicación</title>
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -74,7 +73,6 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    /* Formularios */
     .card {
       background: white;
       border-radius: 12px;
@@ -113,8 +111,18 @@
       padding: 0.4rem 0.7rem;
       border-radius: 8px;
     }
+    .drug-item span {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 0.9rem;
+    }
     .drug-item input[type="number"] {
       width: 70px;
+      min-width: 70px;
+      text-align: center;
+      flex-shrink: 0;
     }
     .checkbox-group {
       display: flex;
@@ -136,7 +144,6 @@
     }
     button:hover { background: #1f5f5f; }
 
-    /* Tabla historial */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -234,7 +241,6 @@
     // ========== CONFIGURACIÓN ==========
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxay8AtRfBiuwnHvfUu5PuAwhncQ73HQLAXEHrpbSeU3nMCTI2UASTwrfAYJvvKbw/exec'; // <-- REEMPLAZAR
 
-    // Lista unificada de medicamentos
     const DRUGS = [
       "Bromuro De Pancuronio 2 mg/ml amp (Refrigerado)",
       "Fentanilo 0,25 mcg/ml amp",
@@ -247,6 +253,7 @@
       "Succinilcolina 100 mg/ml amp (Refrigerado)",
       "Atracurium 50 mg/5ml Iny.amp"
     ];
+
 
     // ========== ELEMENTOS ==========
     const tabs = document.querySelectorAll('.tab-btn');
